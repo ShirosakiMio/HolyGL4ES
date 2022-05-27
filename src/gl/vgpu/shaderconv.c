@@ -9,12 +9,6 @@
 #include "../logs.h"
 #include "../const.h"
 
-// Version expected to be replaced
-char * old_version = "#version 120";
-// The version we will declare as
-//char * new_version = "#version 450 compatibility";
-char * new_version = "#version 320 es\n";
-
 int NO_OPERATOR_VALUE = 9999;
 
 /** Convert the shader through multiple steps
@@ -136,10 +130,7 @@ char * InsertExtension(char * source, int * sourceLength, const int insertPoint,
 }
 
 int doesShaderVersionContainsES(const char * source){
-    if(FindString(source, "#version 300 es") || FindString(source, "#version 310 es") || FindString(source, "#version 320 es")){
-        return 1;
-    }
-    return 0;
+    return GetShaderVersion(source) >= 300;
 }
 
 char * WrapIvecFunctions(char * source, int * sourceLength){
@@ -173,14 +164,14 @@ char * WrapIvecFunctions(char * source, int * sourceLength){
                                                                                    "vec3 vgpu_textureSize(sampler2DMSArray sampler){ivec3 size = textureSize(sampler);return vec3(size.x, size.y, size.z);}\n"
                                                                                    "#endif\n");
 
-    source = WrapFunction(source, sourceLength, "textureOffset", "vgpu_textureOffset", "\nvec4 vgpu_textureOffset(sampler2D tex, vec2 P, vec2 offset){return vgpu_textureOffset(tex, P, offset, 0.0);}\n"
-                                                                                       "vec4 vgpu_textureOffset(sampler2D tex, vec2 P, vec2 offset, float bias){ivec2 Size = textureSize(tex, 0);return texture(tex, P+offset/vec2(float(Size.x), float(Size.y)), bias);}\n"
-                                                                                       "vec4 vgpu_textureOffset(sampler3D tex, vec3 P, vec3 offset){return vgpu_textureOffset(tex, P, offset, 0.0);}\n"
+    source = WrapFunction(source, sourceLength, "textureOffset", "vgpu_textureOffset", "\nvec4 vgpu_textureOffset(sampler2D tex, vec2 P, vec2 offset, float bias){ivec2 Size = textureSize(tex, 0);return texture(tex, P+offset/vec2(float(Size.x), float(Size.y)), bias);}\n"
+                                                                                       "vec4 vgpu_textureOffset(sampler2D tex, vec2 P, vec2 offset){return vgpu_textureOffset(tex, P, offset, 0.0);}\n"
                                                                                        "vec4 vgpu_textureOffset(sampler3D tex, vec3 P, vec3 offset, float bias){ivec3 Size = textureSize(tex, 0);return texture(tex, P+offset/vec3(float(Size.x), float(Size.y), float(Size.z)), bias);}\n"
-                                                                                       "vec4 vgpu_textureOffset(sampler2DShadow tex, vec3 P, vec2 offset){return vgpu_textureOffset(tex, P, offset, 0.0);}\n"
-                                                                                       "vec4 vgpu_textureOffset(sampler2DShadow tex, vec3 P, vec2 offset, float bias){ivec2 Size = textureSize(tex, 0);return texture(tex, P+vec3(offset.x, offset.y, 0)/vec3(float(Size.x), float(Size.y), 1.0), bias);}\n"
-                                                                                       "vec4 vgpu_textureOffset(sampler2DArray tex, vec3 P, vec2 offset){return vgpu_textureOffset(tex, P, offset, 0.0);}\n"
-                                                                                       "vec4 vgpu_textureOffset(sampler2DArray tex, vec3 P, vec2 offset, float bias){ivec3 Size = textureSize(tex, 0);return texture(tex, P+vec3(offset.x, offset.y, 0)/vec3(float(Size.x), float(Size.y), float(Size.z)), bias);}\n");
+                                                                                       "vec4 vgpu_textureOffset(sampler3D tex, vec3 P, vec3 offset){return vgpu_textureOffset(tex, P, offset, 0.0);}\n"
+                                                                                       "float vgpu_textureOffset(sampler2DShadow tex, vec3 P, vec2 offset, float bias){ivec2 Size = textureSize(tex, 0);return texture(tex, P+vec3(offset.x, offset.y, 0)/vec3(float(Size.x), float(Size.y), 1.0), bias);}\n"
+                                                                                       "float vgpu_textureOffset(sampler2DShadow tex, vec3 P, vec2 offset){return vgpu_textureOffset(tex, P, offset, 0.0);}\n"
+                                                                                       "vec4 vgpu_textureOffset(sampler2DArray tex, vec3 P, vec2 offset, float bias){ivec3 Size = textureSize(tex, 0);return texture(tex, P+vec3(offset.x, offset.y, 0)/vec3(float(Size.x), float(Size.y), float(Size.z)), bias);}\n"
+                                                                                       "vec4 vgpu_textureOffset(sampler2DArray tex, vec3 P, vec2 offset){return vgpu_textureOffset(tex, P, offset, 0.0);}\n");
 
     source = WrapFunction(source, sourceLength, "shadow2D", "vgpu_shadow2D", "\nvec4 vgpu_shadow2D(sampler2DShadow shadow, vec3 coord){return vec4(texture(shadow, coord), 0.0, 0.0, 0.0);}\n"
                                                                               "vec4 vgpu_shadow2D(sampler2DShadow shadow, vec3 coord, float bias){return vec4(texture(shadow, coord, bias), 0.0, 0.0, 0.0);}\n");
@@ -782,10 +773,6 @@ char * ReplacePrecisionQualifiers(char * source, int * sourceLength){
                                    "precision lowp sampler2DArray;\n"
                                    "precision lowp sampler2DArrayShadow;\n"
                                    "precision lowp samplerCube;\n"
-                                   "precision lowp image2D;\n"
-                                   "precision lowp image2DArray;\n"
-                                   "precision lowp image3D;\n"
-                                   "precision lowp imageCube;\n"
                                    "#ifdef GL_EXT_texture_buffer\n"
                                    "precision lowp samplerBuffer;\n"
                                    "precision lowp imageBuffer;\n"
@@ -799,6 +786,14 @@ char * ReplacePrecisionQualifiers(char * source, int * sourceLength){
                                    "precision lowp sampler2DMS;\n"
                                    "precision lowp sampler2DMSArray;\n"
                                    "#endif\n");
+    if(GetShaderVersion(source) > 300){
+        source = InplaceInsertByIndex(source, sourceLength,insertPoint,
+                                      "\nprecision lowp image2D;\n"
+                                      "precision lowp image2DArray;\n"
+                                      "precision lowp image3D;\n"
+                                      "precision lowp imageCube;\n");
+    }
+
 
 
 
@@ -950,4 +945,19 @@ char * insertIntAtFunctionCall(char * source, int * sourceSize, const char * fun
         functionCallPosition += offset + strlen(functionName);
     }
     return source;
+}
+
+/**
+ * @param source The shader as a string
+ * @return The shader version: eg. 310 for #version 310 es
+ */
+int GetShaderVersion(const char * source){
+    // Oh yeah, I won't care much about this function
+    if(FindString(source, "#version 320 es")){return 320;}
+    if(FindString(source, "#version 310 es")){return 310;}
+    if(FindString(source, "#version 300 es")){return 300;}
+    if(FindString(source, "#version 150")){return 150;}
+    if(FindString(source, "#version 130")){return 130;}
+    if(FindString(source, "#version 120")){return 120;}
+    return 100;
 }
