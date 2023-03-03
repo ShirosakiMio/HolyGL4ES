@@ -513,6 +513,13 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
     Tmp = InplaceInsert(Tmp, GLESFullHeader, Tmp, &tmpsize);
   }
   int headline = 3;
+  int texture3D = (strstr(pBuffer, "texture3D")) ? 1 : 0;
+  const char *GLESUseTexture3D = "#extension GL_OES_texture_3D : enable\nprecision lowp sampler3D;\n";
+  if (texture3D)
+  {
+    Tmp = InplaceInsert(GetLine(Tmp, 1), GLESUseTexture3D, Tmp, &tmpsize);
+    headline++;
+  }
   // check if gl_FragDepth is used
   int fragdepth = (strstr(pBuffer, "gl_FragDepth"))?1:0;
   const char* GLESUseFragDepth = "#extension GL_EXT_frag_depth : enable\n";
