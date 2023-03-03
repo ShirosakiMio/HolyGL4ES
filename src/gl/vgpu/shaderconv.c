@@ -97,12 +97,12 @@ char * ConvertShaderVgpu(struct shader_s * shader_source){
     //source = ReplaceVariableName(source, &sourceLength, "const", " ");
 
 
+
+
     // Avoid keyword clash with gl4es #define blocks
     //printf("REPLACING KEYWORDS");
     source = InplaceReplaceSimple(source, &sourceLength, "#define texture2D texture\n", "");
-
     source = ReplaceVariableName(source, &sourceLength, "sample", "vgpu_Sample");
-
     source = ReplaceVariableName(source, &sourceLength, "texture", "vgpu_texture");
 
     source = ReplaceFunctionName(source, &sourceLength, "texture2D", "texture");
@@ -133,7 +133,7 @@ char * ConvertShaderVgpu(struct shader_s * shader_source){
     //printf("FIXING ARRAY ACCESS");
     // Avoid any weird type trying to be an index for an array
     source = ForceIntegerArrayAccess(source, &sourceLength);
- 
+
     //printf("WRAPPING FUNCTION");
     // Since everything is a float, we need to overload WAY TOO MANY functions
     source = WrapIvecFunctions(source, &sourceLength);

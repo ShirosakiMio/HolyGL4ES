@@ -550,7 +550,7 @@ char* ConvertShader(const char* pEntry, int isVertex, shaderconv_need_t *need, i
         Tmp = InplaceInsert(GetLine(Tmp, headline), HackAltPow, Tmp, &tmpsize);
     }
     if(strstr(Tmp, "max(") || strstr(Tmp, "max (")) {
-      Tmp = InplaceInsert(GetLine(Tmp, headline), HackAltMax, Tmp, &tmpsize);
+        Tmp = InplaceInsert(GetLine(Tmp, headline), HackAltMax, Tmp, &tmpsize);
     }
     if(strstr(Tmp, "min(") || strstr(Tmp, "min (")) {
         Tmp = InplaceInsert(GetLine(Tmp, headline), HackAltMin, Tmp, &tmpsize);

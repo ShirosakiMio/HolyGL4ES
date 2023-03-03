@@ -93,29 +93,9 @@ LOCAL_CFLAGS += -g -std=gnu99 -funwind-tables -O3 -fvisibility=hidden -include i
 LOCAL_CFLAGS += -DNOX11
 LOCAL_CFLAGS += -DNO_GBM
 #LOCAL_CFLAGS += -DNO_INIT_CONSTRUCTOR
-LOCAL_CFLAGS += -DDEFAULT_ES=2
+#LOCAL_CFLAGS += -DDEFAULT_ES=2
 
 LOCAL_LDLIBS := -ldl -llog
 #building as a static lib
-
-include $(BUILD_SHARED_LIBRARY)
-
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := EGL_wrapper
-
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-
-LOCAL_EXPORT_C_INCLUDES := $(LOCAL_C_INCLUDES) -DBCMHOST
-
-LOCAL_SRC_FILES := \
-	src/egl/egl.c \
-    src/egl/lookup.c\
-
-LOCAL_CFLAGS += -g -std=gnu99 -funwind-tables -O3 -fvisibility=hidden
-
-LOCAL_SHARED_LIBRARIES :=gl4es_114
-
-LOCAL_LDLIBS := -ldl
 
 include $(BUILD_SHARED_LIBRARY)
